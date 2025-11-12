@@ -325,8 +325,11 @@ class Iiwa_pub_sub : public rclcpp::Node
 
                 Eigen::Vector3d error = computeLinearError(p_.pos, Eigen::Vector3d(cartpos.p.data));
                 Eigen::Vector3d o_error = computeOrientationError(toEigen(init_cart_pose_.M), toEigen(cartpos.M));
-
-
+             
+                if(ctrl_ != "vision_ctrl"){
+                    std::cout << "The error norm is : " << error.norm() << std::endl;
+                }
+             
                 if(cmd_interface_ == "position"){
 
                     KDL::Frame nextFrame; nextFrame.M = cartpos.M; nextFrame.p = cartpos.p + (toKDL(p_.vel) + toKDL(Kp*error))*dt; 
