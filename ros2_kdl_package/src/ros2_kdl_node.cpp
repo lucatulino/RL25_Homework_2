@@ -362,7 +362,7 @@ class Iiwa_pub_sub : public rclcpp::Node
                     }
                     else{
                         joint_velocities_cmd_.data.setZero(joint_velocities_cmd_.data.size());
-                        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "Nessuna posa visiva disponibile!");
+                        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "No pose available!");
                     }
 
 
