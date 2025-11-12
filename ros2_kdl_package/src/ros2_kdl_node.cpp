@@ -16,7 +16,6 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include <Eigen/Geometry>
 
-
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/wait_for_message.hpp"
 
@@ -251,7 +250,6 @@ class Iiwa_pub_sub : public rclcpp::Node
 
         void handle_accepted(const std::shared_ptr<GoalHandleExecuteTrajectory> goal_handle)
         {
-            action_active_ = true;
             std::thread{std::bind(&Iiwa_pub_sub::execute_trajectory, this, goal_handle)}.detach();
         }
 
@@ -280,9 +278,6 @@ class Iiwa_pub_sub : public rclcpp::Node
 
 
         void cmd_publisher(){
-            if (action_active_) {
-                return;
-            }
 
             iteration_ = iteration_ + 1;
 
@@ -330,10 +325,6 @@ class Iiwa_pub_sub : public rclcpp::Node
 
                 Eigen::Vector3d error = computeLinearError(p_.pos, Eigen::Vector3d(cartpos.p.data));
                 Eigen::Vector3d o_error = computeOrientationError(toEigen(init_cart_pose_.M), toEigen(cartpos.M));
-                
-                if(ctrl_ != "vision_ctrl"){
-                    std::cout << "The error norm is : " << error.norm() << std::endl;
-                }
 
 
                 if(cmd_interface_ == "position"){
@@ -368,7 +359,7 @@ class Iiwa_pub_sub : public rclcpp::Node
                     }
                     else{
                         joint_velocities_cmd_.data.setZero(joint_velocities_cmd_.data.size());
-                        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "No poses available!");
+                        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "Nessuna posa visiva disponibile!");
                     }
 
 
@@ -497,10 +488,11 @@ class Iiwa_pub_sub : public rclcpp::Node
                 robot_->update(toStdVector(joint_positions_.data), toStdVector(joint_velocities_.data));
 
                 t += dt;
-                rclcpp::sleep_for(std::chrono::milliseconds(static_cast<int>(dt * 1000)));
+                rclcpp::Rate rate(1.0 / dt);
+                rate.sleep();
 
             }
-            action_active_ = false;
+
             result->success = true;
             result->message = "Trajectory completed successfully";
             goal_handle->succeed(result);
@@ -520,11 +512,6 @@ class Iiwa_pub_sub : public rclcpp::Node
 
         double last_aruco_msg_time_;
         double aruco_timeout_ = 0.5; 
-
-        bool action_active_ = false;
-
-
-
 
         std::vector<double> desired_commands_ = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         KDL::JntArray joint_positions_;
